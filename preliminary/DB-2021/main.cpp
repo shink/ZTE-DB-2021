@@ -11,13 +11,22 @@
 #define TEST
 // #define FIRST_STAGE
 
+#ifdef __linux
+
+#include <unistd.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+
+#endif
 
 #ifdef TEST
+#ifdef __linux
+#define OUTPUT_FILE "/home/shenke/Develop/Repository/ZTE-DB-2021/preliminary/output.txt"
+#define LOG_FILE "/home/shenke/Develop/Repository/ZTE-DB-2021/preliminary/log.txt"
+#else
 #define OUTPUT_FILE "D:/GitHub Repository/ZTE-DB-2021/preliminary/output.txt"
-// #define OUTPUT_FILE "/home/shenke/Develop/Repository/ZTE-DB-2021/preliminary/output.txt"
-
 #define LOG_FILE "D:/GitHub Repository/ZTE-DB-2021/preliminary/log.txt"
-// #define LOG_FILE "/home/shenke/Develop/Repository/ZTE-DB-2021/preliminary/log.txt"
+#endif
 #endif
 
 
@@ -75,6 +84,65 @@ void Handler::Init() {
 }
 
 void Handler::Input(const std::string &datasetB) {
+#ifdef __linux
+    int fd = open(datasetB.c_str(), O_RDONLY);
+    long file_size = lseek(fd, 0, SEEK_END);
+    char *buffer = (char *) mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
+
+    uint32_t left = 0u, right;
+    uint32_t valueIdx1, valueIdx2, valueIdx3;
+    char valueBuffer[1u << 12u];
+
+    while (buffer[left]) {
+        while (buffer[left] != '\"') ++left;
+        right = ++left;
+        while (buffer[right] != '\"') ++right;
+        memcpy(valueBuffer, buffer + left, right - left);
+        valueBuffer[right - left] = '\0';
+        std::string value1(valueBuffer);
+        if (map.find(value1) == map.end()) {
+            valueIdx1 = (uint32_t) map.size();
+            map[value1] = valueIdx1;
+            values.emplace_back(value1);
+        } else {
+            valueIdx1 = map[value1];
+        }
+
+        right += 3u;
+        left = right;
+        while (buffer[right] != '\"') ++right;
+        memcpy(valueBuffer, buffer + left, right - left);
+        valueBuffer[right - left] = '\0';
+        std::string value2(valueBuffer);
+        if (map.find(value2) == map.end()) {
+            valueIdx2 = (uint32_t) map.size();
+            map[value2] = valueIdx2;
+            values.emplace_back(value2);
+        } else {
+            valueIdx2 = map[value2];
+        }
+
+        right += 3u;
+        left = right;
+        while (buffer[right] != '\"') ++right;
+        memcpy(valueBuffer, buffer + left, right - left);
+        valueBuffer[right - left] = '\0';
+        std::string value3(valueBuffer);
+        if (map.find(value3) == map.end()) {
+            valueIdx3 = (uint32_t) map.size();
+            map[value3] = valueIdx3;
+            values.emplace_back(value3);
+        } else {
+            valueIdx3 = map[value3];
+        }
+
+        left = right + 2u;
+        datasetBIds.insert(GetId(valueIdx1, valueIdx2, valueIdx3));
+    }
+
+    munmap(buffer, file_size);
+#else
     FILE *fp;
     char buffer[1u << 13u];
     char valueBuffer[1u << 12u];
@@ -134,9 +202,47 @@ void Handler::Input(const std::string &datasetB) {
     }
 
     fclose(fp);
+#endif
 }
 
 void Handler::Handle(const std::string &datasetA) {
+#ifdef __linux
+    int fd = open(datasetA.c_str(), O_RDONLY);
+    long file_size = lseek(fd, 0, SEEK_END);
+    char *buffer = (char *) mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
+
+    uint32_t left = 0u, right;
+    char valueBuffer[1u << 12u];
+
+    while (buffer[left]) {
+        while (buffer[left] != '\"') ++left;
+        right = ++left;
+        while (buffer[right] != '\"') ++right;
+        memcpy(valueBuffer, buffer + left, right - left);
+        valueBuffer[right - left] = '\0';
+        std::string value1(valueBuffer);
+
+        right += 3u;
+        left = right;
+        while (buffer[right] != '\"') ++right;
+        memcpy(valueBuffer, buffer + left, right - left);
+        valueBuffer[right - left] = '\0';
+        std::string value2(valueBuffer);
+
+        right += 3u;
+        left = right;
+        while (buffer[right] != '\"') ++right;
+        memcpy(valueBuffer, buffer + left, right - left);
+        valueBuffer[right - left] = '\0';
+        std::string value3(valueBuffer);
+
+        left = right + 2u;
+        Handle(value1, value2, value3);
+    }
+
+    munmap(buffer, file_size);
+#else
     FILE *fp;
     char buffer[1u << 13u];
     char valueBuffer[1u << 12u];
@@ -175,6 +281,7 @@ void Handler::Handle(const std::string &datasetA) {
     }
 
     fclose(fp);
+#endif
 }
 
 void Handler::Output() {
@@ -247,12 +354,15 @@ void Handler::PrintLog(const std::string &log) {
 }
 
 
-int main() {
+int main(int argc, char *argv[]) {
 #ifdef TEST
-    // std::string datasetA = "/home/shenke/Develop/Repository/ZTE-DB-2021/preliminary/data/input1.csv";
-    // std::string datasetB = "/home/shenke/Develop/Repository/ZTE-DB-2021/preliminary/data/input2.csv";
+#ifdef __linux
+    std::string datasetA = "/home/shenke/Develop/Repository/ZTE-DB-2021/preliminary/data/input1.csv";
+    std::string datasetB = "/home/shenke/Develop/Repository/ZTE-DB-2021/preliminary/data/input2.csv";
+#else
     std::string datasetA = R"(D:\GitHub Repository\ZTE-DB-2021\preliminary\data\input1.csv)";
     std::string datasetB = R"(D:\GitHub Repository\ZTE-DB-2021\preliminary\data\input2.csv)";
+#endif
 #else
 #ifdef FIRST_STAGE
     std::string datasetA = "/home/web/ztedatabase/1/input1.csv";
