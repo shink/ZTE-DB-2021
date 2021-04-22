@@ -2,4 +2,5 @@
 cmake-build-debug
 bin
 build
-
+log.txt
+output.txt
