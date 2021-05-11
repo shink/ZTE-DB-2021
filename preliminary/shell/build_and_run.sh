@@ -3,7 +3,17 @@
 SCRIPT=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT")
 cd $BASEDIR
+cd ..
 
-sh build.sh
-cd ../bin
-./DB-2021
+if [ ! -f log.txt ]
+then
+  touch log.txt
+fi
+
+if [ ! -f output.txt ]
+then
+  touch output.txt
+fi
+
+sh shell/build.sh
+bin/DB-2021

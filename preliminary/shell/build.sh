@@ -24,7 +24,7 @@ mkdir bin
 rm -rf build
 mkdir build
 
-sed -i "s/^#define TEST/\/\/ #define TEST/" DB-2021/main.cpp
+# sed -i "s/^#define TEST/\/\/ #define TEST/" DB-2021/main.cpp
 
 cd build
 cmake ../DB-2021
@@ -45,5 +45,5 @@ echo "make <>return:" ${tmp}
  exit -1
 fi
 
-cd ..
-sed -i "s/^\/\/ \#define TEST/\#define TEST/" DB-2021/main.cpp
+# cd ..
+# sed -i "s/^\/\/ \#define TEST/\#define TEST/" DB-2021/main.cpp
