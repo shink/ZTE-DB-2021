@@ -1,2 +1,3 @@
-# ZTE_DB_2021
-2021中兴捧月大赛数据库赛道
+# ZTE DB 2021
+
+Halfway accident, and therefore give up
